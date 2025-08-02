@@ -1,0 +1,116 @@
+@model WorkshopSystem.Core.Application.DTOs.UpdateServiceRecordDto
+@using WorkshopSystem.Core.Domain.Enums
+
+@{
+    ViewData["Title"] = "Edit Service Record";
+    var isAdmin = ViewBag.IsAdmin as bool? ?? false;
+    var isMechanic = ViewBag.IsMechanic as bool? ?? false;
+    var originalRecord = ViewBag.OriginalRecord as WorkshopSystem.Core.Application.DTOs.ServiceRecordDto;
+}
+
+<h1>Edit Service Record</h1>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    
+    @if (isAdmin)
+    {
+        <div class="form-group">
+            <label asp-for="AssignedMechanicId">Mechanic</label>
+            <select asp-for="AssignedMechanicId" class="form-control">
+                @foreach (var mechanic in ViewBag.Mechanics)
+                {
+                    if (mechanic.Id == originalRecord.AssignedMechanicId)
+                    {
+                        <option value="@mechanic.Id" selected>@mechanic.Email</option>
+                    }
+                    else
+                    {
+                        <option value="@mechanic.Id">@mechanic.Email</option>
+                    }
+                }
+            </select>
+            <span asp-validation-for="AssignedMechanicId" class="text-danger"></span>
+        </div>
+    }
+    else
+    {
+        <input type="hidden" asp-for="AssignedMechanicId" />
+    }
+
+    <div class="form-group">
+        <label asp-for="Description">Description</label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="HoursWorked">Hours Worked</label>
+        <input asp-for="HoursWorked" class="form-control" type="number" step="0.5" min="0" />
+        <span asp-validation-for="HoursWorked" class="text-danger"></span>
+        <small class="form-text text-muted">Cost will be calculated automatically: €75 per hour</small>
+    </div>
+
+    <div class="form-group">
+        <label>Calculated Cost</label>
+        <input type="text" class="form-control" value="€@((Math.Ceiling(originalRecord.HoursWorked) * 75).ToString("F2"))" readonly />
+        <small class="form-text text-muted">This cost will be updated when you save changes</small>
+    </div>
+
+    @if (isAdmin)
+    {
+        <div class="form-group">
+            <label asp-for="Status">Status</label>
+            <select asp-for="Status" class="form-control">
+                @if (originalRecord.Status == ServiceStatus.Pending)
+                {
+                    <option value="@ServiceStatus.Pending" selected>Pending</option>
+                }
+                else
+                {
+                    <option value="@ServiceStatus.Pending">Pending</option>
+                }
+                
+                @if (originalRecord.Status == ServiceStatus.InProgress)
+                {
+                    <option value="@ServiceStatus.InProgress" selected>In Progress</option>
+                }
+                else
+                {
+                    <option value="@ServiceStatus.InProgress">In Progress</option>
+                }
+                
+                @if (originalRecord.Status == ServiceStatus.Completed)
+                {
+                    <option value="@ServiceStatus.Completed" selected>Completed</option>
+                }
+                else
+                {
+                    <option value="@ServiceStatus.Completed">Completed</option>
+                }
+                
+                @if (originalRecord.Status == ServiceStatus.Cancelled)
+                {
+                    <option value="@ServiceStatus.Cancelled" selected>Cancelled</option>
+                }
+                else
+                {
+                    <option value="@ServiceStatus.Cancelled">Cancelled</option>
+                }
+            </select>
+            <span asp-validation-for="Status" class="text-danger"></span>
+        </div>
+    }
+    else
+    {
+        <input type="hidden" asp-for="Status" />
+    }
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 
