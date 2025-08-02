@@ -42,12 +42,15 @@
 
 3. **Build and Run**
    ```bash
+   dotnet restore src/WorkshopSystem.Web/WorkshopSystem.Web.csproj
    dotnet build src/WorkshopSystem.Web/WorkshopSystem.Web.csproj
-   dotnet run --project src/WorkshopSystem.Web/WorkshopSystem.Web.csproj
+  App Run CMD :    dotnet run --project src/WorkshopSystem.Web/WorkshopSystem.Web.csproj
+  API Run CMD :    dotnet run --project src/WorkshopSystem.API/WorkshopSystem.API.csproj
+  Test Run CMD:    dotnet test src/WorkshopSystem.Tests/WorkshopSystem.Tests.csproj
    ```
 
 4. **Access Application**
-   - Open browser: http://localhost:5031
+   - Open browser: http://localhost:(Port Show in terminal)
    - Login with demo credentials (shown on login page)
 
 ## 👤 Demo Credentials
