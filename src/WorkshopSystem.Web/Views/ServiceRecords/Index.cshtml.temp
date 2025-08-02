@@ -1,0 +1,84 @@
+@model IEnumerable<WorkshopSystem.Core.Application.DTOs.ServiceRecordDto>
+
+@{
+    ViewData["Title"] = "Service Records";
+}
+
+<h1>Service Records</h1>
+
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<WorkshopSystem.Core.Domain.Entities.ApplicationUser> UserManager
+@{
+    var currentUserId = UserManager.GetUserId(User);
+    var isAdmin = User.IsInRole("Admin");
+    var isMechanic = User.IsInRole("Mechanic");
+}
+
+@if (isAdmin)
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    </p>
+}
+
+@if (Model.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>@Html.DisplayNameFor(model => model.ServiceDate)</th>
+                <th>@Html.DisplayNameFor(model => model.Description)</th>
+                <th>@Html.DisplayNameFor(model => model.Status)</th>
+                <th>Mechanic</th>
+                <th>Requested By</th>
+                <th>Service Cost</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.ServiceDate.ToShortDateString()</td>
+                    <td>@Html.DisplayFor(modelItem => item.Description)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Status)</td>
+                    <td>@Html.DisplayFor(modelItem => item.MechanicName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.RequestedByName)</td>
+                    <td>@item.ServiceCost.ToString("C")</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Details</a>
+                        @if (isAdmin || (isMechanic && item.AssignedMechanicId == currentUserId))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edit</a>
+                        }
+                        @if (isAdmin)
+                        {
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Delete</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-info">
+        No service records found.
+        @if (isAdmin)
+        {
+            <a asp-action="Create" class="alert-link">Create a new service record</a>.
+        }
+    </div>
+}
+
+@section Styles {
+    <style>
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        .btn-sm {
+            margin: 2px;
+        }
+    </style>
+} 

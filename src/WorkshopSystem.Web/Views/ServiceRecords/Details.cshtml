@@ -1,0 +1,44 @@
+@model WorkshopSystem.Core.Application.DTOs.ServiceRecordDto
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<WorkshopSystem.Core.Domain.Entities.ApplicationUser> UserManager
+@{
+    ViewData["Title"] = "Service Record Details";
+    var currentUserId = UserManager.GetUserId(User);
+    var isAdmin = User.IsInRole("Admin");
+    var isMechanic = User.IsInRole("Mechanic");
+    var isCustomer = User.IsInRole("Customer");
+    var canView = isAdmin || (isMechanic && Model.AssignedMechanicId == currentUserId) || (isCustomer && Model.RequestedById == currentUserId);
+}
+@if (canView)
+{
+    <h1>Service Record Details</h1>
+    <dl class="row">
+        <dt class="col-sm-3">Customer</dt>
+        <dd class="col-sm-9">@Model.RequestedByName</dd>
+        <dt class="col-sm-3">Car</dt>
+        <dd class="col-sm-9">@Model.CarRegistrationNumber</dd>
+        <dt class="col-sm-3">Mechanic</dt>
+        <dd class="col-sm-9">@Model.MechanicName</dd>
+        <dt class="col-sm-3">Description</dt>
+        <dd class="col-sm-9">@Model.Description</dd>
+        <dt class="col-sm-3">Hours Worked</dt>
+        <dd class="col-sm-9">@Model.HoursWorked</dd>
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">@Model.Status</dd>
+        <dt class="col-sm-3">Service Cost</dt>
+        <dd class="col-sm-9">@Model.ServiceCost.ToString("C")</dd>
+        <dt class="col-sm-3">Service Date</dt>
+        <dd class="col-sm-9">@Model.ServiceDate.ToShortDateString()</dd>
+        @if (Model.CompletionDate != null)
+        {
+            <dt class="col-sm-3">Completion Date</dt>
+            <dd class="col-sm-9">@Model.CompletionDate?.ToShortDateString()</dd>
+        }
+    </dl>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+}
+else
+{
+    <div class="alert alert-danger">You are not authorized to view this service record.</div>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+}

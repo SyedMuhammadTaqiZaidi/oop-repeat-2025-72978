@@ -1,0 +1,95 @@
+@model IEnumerable<WorkshopSystem.Core.Application.DTOs.ServiceRecordDto>
+@using WorkshopSystem.Core.Domain.Enums
+
+@{
+    ViewData["Title"] = "Service Records";
+}
+
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<WorkshopSystem.Core.Domain.Entities.ApplicationUser> UserManager
+@{
+    var currentUserId = UserManager.GetUserId(User);
+    var isAdmin = User.IsInRole("Admin");
+    var isMechanic = User.IsInRole("Mechanic");
+    var isCustomer = User.IsInRole("Customer");
+}
+
+@if (User.Identity.IsAuthenticated)
+{
+    <div class="alert alert-info">
+        <strong>Debug Info:</strong> 
+        User: @User.Identity.Name, 
+        IsAdmin: @isAdmin, 
+        IsMechanic: @isMechanic, 
+        IsCustomer: @isCustomer,
+        CurrentUserId: @currentUserId
+    </div>
+}
+
+<h1>Service Records</h1>
+
+@if (User.IsInRole("Admin"))
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    </p>
+}
+
+@if (Model.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Service Date</th>
+                @if (isAdmin)
+                {
+                    <th>Customer</th>
+                    <th>Car</th>
+                }
+                <th>Description</th>
+                <th>Hours</th>
+                <th>Cost (€)</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.ServiceDate.ToShortDateString()</td>
+                    @if (isAdmin)
+                    {
+                        <td>@item.CustomerName</td>
+                        <td>@item.CarRegistrationNumber</td>
+                    }
+                    <td>@item.Description</td>
+                    <td>@item.HoursWorked hours</td>
+                    <td>€@item.ServiceCost.ToString("F2")</td>
+                    <td>@item.Status</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Details</a>
+                        @if (isMechanic && item.AssignedMechanicId == currentUserId)
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edit</a>
+                        }
+                        @if (isAdmin)
+                        {
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Delete</a>
+                        }
+                        @if (isMechanic && item.AssignedMechanicId == currentUserId && item.Status != ServiceStatus.Completed)
+                        {
+                            <a asp-action="CompleteService" asp-route-id="@item.Id" class="btn btn-success btn-sm">Complete</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-info">
+        No service records found.
+    </div>
+} 

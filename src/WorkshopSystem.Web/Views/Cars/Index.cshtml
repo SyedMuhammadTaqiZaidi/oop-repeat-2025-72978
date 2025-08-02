@@ -1,0 +1,40 @@
+@model IEnumerable<WorkshopSystem.Core.Domain.Entities.Car>
+
+@{
+    ViewData["Title"] = "Cars";
+}
+
+<h2>Cars</h2>
+@if (TempData["CarCreateSuccess"] != null)
+{
+    <div class="alert alert-success">@TempData["CarCreateSuccess"]</div>
+}
+@if (TempData["CarCreateError"] != null)
+{
+    <div class="alert alert-danger">@TempData["CarCreateError"]</div>
+}
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Car</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Registration Number</th>
+            <th>Customer</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.RegistrationNumber</td>
+            <td>@item.Customer?.Email</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
