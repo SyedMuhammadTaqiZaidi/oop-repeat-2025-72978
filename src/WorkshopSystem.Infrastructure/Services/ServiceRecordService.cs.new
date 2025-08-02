@@ -1,0 +1,94 @@
+using Microsoft.EntityFrameworkCore;
+using WorkshopSystem.Core.Application.DTOs;
+using WorkshopSystem.Core.Application.Interfaces;
+using WorkshopSystem.Core.Domain.Entities;
+using WorkshopSystem.Core.Domain.Enums;
+using WorkshopSystem.Infrastructure.Data;
+
+namespace WorkshopSystem.Infrastructure.Services
+{
+    public class ServiceRecordService : IServiceRecordService
+    {
+        private readonly ApplicationDbContext _context;
+        private const decimal HourlyRate = 75.00m;
+        private const decimal TaxRate = 0.23m; // 23% VAT
+
+        public ServiceRecordService(ApplicationDbContext context) => _context = context;
+
+        public async Task<ServiceRecordDto> GetServiceRecordByIdAsync(int id)
+        {
+            var record = await _context.ServiceRecords
+                .Include(sr => sr.Car)
+                .Include(sr => sr.AssignedMechanic)
+                .Include(sr => sr.RequestedBy)
+                .FirstOrDefaultAsync(sr => sr.Id == id);
+            
+            return record != null ? MapToDto(record) : null;
+        }
+
+        public async Task<decimal> CalculateServiceCost(int id)
+        {
+            var record = await _context.ServiceRecords.FindAsync(id);
+            if (record == null) return 0;
+            
+            var hours = Math.Ceiling(record.HoursWorked);
+            var subtotal = hours * HourlyRate;
+            var tax = subtotal * TaxRate;
+            return subtotal + tax;
+        }
+
+        public async Task<bool> UpdateServiceRecordStatusAsync(int id, ServiceStatus newStatus, string userId)
+        {
+            var record = await _context.ServiceRecords.FindAsync(id);
+            if (record == null) return false;
+
+            // Only allow status changes if the user is the assigned mechanic or an admin
+            var isAdmin = await _userManager.IsInRoleAsync(userId, "Admin");
+            var isAssignedMechanic = record.AssignedMechanicId == userId;
+            
+            if (!isAdmin && !isAssignedMechanic) return false;
+
+            // Update status and set completion date if completed
+            record.Status = newStatus;
+            if (newStatus == ServiceStatus.Completed)
+            {
+                record.CompletionDate = DateTime.UtcNow;
+                record.ServiceCost = await CalculateServiceCost(id);
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> AssignMechanicAsync(int serviceRecordId, string mechanicId)
+        {
+            var record = await _context.ServiceRecords.FindAsync(serviceRecordId);
+            if (record == null) return false;
+
+            var isMechanic = await _userManager.IsInRoleAsync(mechanicId, "Mechanic");
+            if (!isMechanic) return false;
+
+            record.AssignedMechanicId = mechanicId;
+            record.Status = ServiceStatus.InProgress;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        private static ServiceRecordDto MapToDto(ServiceRecord sr) => new()
+        {
+            Id = sr.Id,
+            ServiceDate = sr.ServiceDate,
+            CompletionDate = sr.CompletionDate,
+            Description = sr.Description,
+            ServiceCost = sr.ServiceCost,
+            HoursWorked = sr.HoursWorked,
+            Status = sr.Status,
+            CarId = sr.CarId,
+            AssignedMechanicId = sr.AssignedMechanicId,
+            RequestedById = sr.RequestedById,
+            CarInfo = sr.Car?.RegistrationNumber,
+            MechanicName = $"{sr.AssignedMechanic?.FirstName} {sr.AssignedMechanic?.LastName}",
+            RequestedByName = $"{sr.RequestedBy?.FirstName} {sr.RequestedBy?.LastName}"
+        };
+    }
+}
